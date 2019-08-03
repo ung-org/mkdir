@@ -22,9 +22,10 @@
  * SOFTWARE.
  */
 
-#define _POSIX_C_SOURCE 2
+#define _XOPEN_SOURCE 500
 #include <errno.h>
 #include <locale.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -40,8 +41,26 @@ static int translate_mode(const char *s)
 
 static int mk_dir(char *path, int mode, int flags)
 {
-	/* TODO: parents */
+	if (flags & PARENTS) {
+		char parent[strlen(path) + 1];
+		strcpy(parent, path);
+		char *p = dirname(parent);
+		if (!strcmp(p, "/") || !strcmp(p, ".") || !strcmp(p, "..")) {
+			goto MKDIR;
+		}
 
+		struct stat st;
+		if (stat(p, &st) == 0 && !S_ISDIR(st.st_mode)) {
+			fprintf(stderr, "mkdir: %s: %s\n", path, strerror(EEXIST));
+			return 1;
+		}
+
+		if (mk_dir(p, mode, flags) != 0) {
+			return 1;
+		}
+	}
+
+	MKDIR:
 	if (mkdir(path, mode) != 0) {
 		fprintf(stderr, "mkdir: %s: %s\n", path, strerror(errno));
 		return 1;
@@ -63,7 +82,7 @@ int main(int argc, char *argv[])
 	int flags = 0;
 
 	int c;
-	while ((c = getopt(argc, argv, "mp:")) != -1) {
+	while ((c = getopt(argc, argv, "m:p")) != -1) {
 		switch (c) {
 		case 'm':
 			mode = translate_mode(optarg);
