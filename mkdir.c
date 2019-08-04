@@ -27,19 +27,26 @@
 #include <locale.h>
 #include <libgen.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 enum { SETMODE = 1 << 0, PARENTS = 1 << 1 };
 
-static int translate_mode(const char *s)
+static mode_t translate_mode(const char *s)
 {
-	/* TODO: same as chmod */
+	char *end = NULL;
+	mode_t mode = (mode_t)strtol(s, &end, 8);
+
+	if (*end == '\0') {
+		return mode;
+	}
+
 	return 0;
 }
 
-static int mk_dir(char *path, int mode, int flags)
+static int mk_dir(char *path, mode_t mode, int flags)
 {
 	if (flags & PARENTS) {
 		char parent[strlen(path) + 1];
@@ -74,7 +81,7 @@ int main(int argc, char *argv[])
 {
 	setlocale(LC_ALL, "");
 
-	int mode = S_IRWXU | S_IRWXG | S_IRWXO;
+	mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
 	int flags = 0;
 
 	int c;
