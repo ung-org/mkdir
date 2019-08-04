@@ -45,22 +45,18 @@ static int mk_dir(char *path, int mode, int flags)
 		char parent[strlen(path) + 1];
 		strcpy(parent, path);
 		char *p = dirname(parent);
-		if (!strcmp(p, "/") || !strcmp(p, ".") || !strcmp(p, "..")) {
-			goto MKDIR;
-		}
 
 		struct stat st;
-		if (stat(p, &st) == 0 && !S_ISDIR(st.st_mode)) {
+		if (stat(p, &st) != 0) {
+			if (mk_dir(p, mode, flags) != 0) {
+				return 1;
+			}
+		} else if (!S_ISDIR(st.st_mode)) {
 			fprintf(stderr, "mkdir: %s: %s\n", path, strerror(EEXIST));
-			return 1;
-		}
-
-		if (mk_dir(p, mode, flags) != 0) {
 			return 1;
 		}
 	}
 
-	MKDIR:
 	if (mkdir(path, mode) != 0) {
 		fprintf(stderr, "mkdir: %s: %s\n", path, strerror(errno));
 		return 1;
