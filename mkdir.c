@@ -52,7 +52,7 @@ static int mk_dir(char *path, int mode, int flags)
 				return 1;
 			}
 		} else if (!S_ISDIR(st.st_mode)) {
-			fprintf(stderr, "mkdir: %s: %s\n", path, strerror(EEXIST));
+			fprintf(stderr, "mkdir: %s: %s\n", p, strerror(EEXIST));
 			return 1;
 		}
 	}
