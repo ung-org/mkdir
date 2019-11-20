@@ -65,6 +65,12 @@ static int mk_dir(char *path, mode_t mode, int flags)
 	}
 
 	if (mkdir(path, mode) != 0) {
+		if ((flags & PARENTS) && (errno == EEXIST)) {
+			struct stat st;
+			if (stat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
+				return 0;
+			}
+		}
 		fprintf(stderr, "mkdir: %s: %s\n", path, strerror(errno));
 		return 1;
 	}
